@@ -1,0 +1,99 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<style>
+    .menu {
+        position: fixed;
+        top: 50px;
+        right: 250px;
+    }
+
+    .tablecss {
+        font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+    }
+
+    .tablecss td,
+    .tablecss th {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    .tablecss tr:nth-child(odd) {
+        background-color: #f2f2f2;
+    }
+
+    .tablecss tr:hover {
+        background-color: #ddd;
+    }
+
+    .tablecss th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: center;
+        background-color: lavender;
+        font-weight: bold;
+    }
+</style>
+<script>
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+    function LoadData() {
+        const getdata = performAjax("GET", "http://localhost:4444/Warden/viewMenu");
+        getdata
+            .then((details) => {
+                showData(details);
+
+
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+    }
+    function showData(records) {
+       const menudata = JSON.parse(records);
+        console.log(menudata);
+        const tableHeaderString = '<tr><th>S.No</th><th>Day</th><th>BreakFast</th><th>Lunch</th><th>Dinner</th></tr>';
+        let tableRowString = '';
+        if (menudata.length > 0) {
+            menudata.map((menu, index) => {
+                tableRowString += `<tr><td>${index + 1}</td><td>${menu.day}</td><td>${menu.breakfast}</td><td>${menu.lunch}</td><td>${menu.dinner}</td></tr>`;
+            });
+            document.getElementById('table').innerHTML = `<table border="1">${tableHeaderString}${tableRowString}</table>`;
+
+        }
+        else {
+            tableRowString = `<tr><td colspan="6" align="center">No Data Found</td></tr>`
+            document.getElementById('table').innerHTML = `${tableHeaderString}${tableRowString}`;
+        }
+    }        
+</script>
+
+<body onload="LoadData()">
+    <div style="height:60px"></div>
+    <h2> <center><strong>List of Menu items for a Week</strong></center></h2>
+<br>
+    <center>
+        <table id="table" border="1" class="tablecss"></table>
+    </center>
+</body>
+
+</html>

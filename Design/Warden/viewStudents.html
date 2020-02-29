@@ -1,0 +1,101 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<style>
+    .menu {
+        position: fixed;
+        top: 50px;
+        right: 250px;
+    }
+
+    .tablecss {
+        font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 40%;
+        font-size: 15px;
+    }
+
+    .tablecss td,
+    .tablecss th {
+        border: 1px solid #ddd;
+        padding: 1px;
+    }
+
+    .tablecss tr:nth-child(odd) {
+        background-color: #f2f2f2;
+    }
+
+    .tablecss tr:hover {
+        background-color: #ddd;
+    }
+
+    .tablecss th {
+        padding-top: 10px;
+        padding-bottom: 10px;
+        text-align: center;
+        background-color: lavender;
+        font-weight: bold;
+    }
+</style>
+<script>
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+    function LoadData() {
+        const getdata = performAjax("GET", "http://localhost:4444/Admin/viewStudent");
+        getdata
+            .then((details) => {
+
+                showData(details);
+
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+    }
+    function showData(records) {
+        const studentdata = JSON.parse(records);
+        const tableHeaderString = '<tr><th>S.No</th><th>HallTicket No</th><th>Name</th><th>Father Name</th><th>Branch</th><th>Room No</th><th>Mobile No</th><th>Email Id</th><th>Address</th><th>Total Fee</th><th>Paid Amount</th><th>Date</th><th>Photo</th></tr>';
+        let tableRowString = '';
+        if (studentdata.length > 0) {
+            studentdata.map((student, index) => {
+                let edit = `<button id="${student._id}" class="btn btn-primary" onclick="editRecords(event)" data-toggle="modal" data-target="#myModal">Edit</button>`;
+                let del = `<button id="${student._id}" class="btn btn-danger" onclick="deleteRecord(event)">Delete</button>`;
+                tableRowString += `<tr><td>${index + 1}</td><td>${student.htno}</td><td>${student.name}</td><td>${student.fathername}</td><td>${student.branch}</td><td>${student.roomno}</td><td>${student.phone}</td><td>${student.emailid}</td><td>${student.address}</td><td>${student.totalfee}</td><td>${student.paidamount}</td><td>${student.date}</td><td><img src="${student.image}" style="width:80px;height:70px"></td>
+                        </tr>`;
+            });
+            document.getElementById('table').innerHTML = `<table border="1">${tableHeaderString}${tableRowString}</table>`;
+        }
+        else {
+            tableRowString = `<tr><td colspan="6" align="center">No Data Found</td></tr>`
+            document.getElementById('table').innerHTML = `${tableHeaderString}${tableRowString}`;
+        }
+    }
+</script>
+
+<body onload="LoadData()"><br>
+    <h2> <center><strong>List of Students</strong></center></h2>
+<br>
+    <center>
+        <table id="table" border="1" class="tablecss"></table>
+    </center>
+</body>
+
+</html>

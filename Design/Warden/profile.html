@@ -1,0 +1,196 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<script>
+
+    const phone = sessionStorage.getItem("phone");
+    const id = sessionStorage.getItem("userid");
+    const name = sessionStorage.getItem("name");
+
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(JSON.parse(this.responseText));
+
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+    function profile() {
+        document.getElementById("phone").value = phone;
+        const getUsersPromise = performAjax("GET", `http://localhost:4444/Warden/profile?phone=${phone}`);
+        getUsersPromise
+            .then((data) => {
+                const profile = JSON.parse(JSON.stringify(data));
+                profile.map(rec => {
+                    document.getElementById("name").value = rec.name;
+                    document.getElementById("emailid").value = rec.emailid;
+                    document.getElementById("age").value = rec.age;
+                    document.getElementById("phone").value = rec.phone;
+                    document.getElementById("qualification").value = rec.qualification;
+                    rec.gender === 'Male' ? document.getElementById("male").checked = true : document.getElementById("female").checked = true;
+                    document.getElementById("address").value = rec.address;
+                    document.getElementById("image").src = rec.image;
+                });
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+
+    }
+    function updateWarden() {
+        const name = document.getElementById("name").value;
+        const emailid = document.getElementById("emailid").value;
+        const age = document.getElementById("age").value;
+        const phone = document.getElementById("phone").value;
+        const qualification = document.getElementById("qualification").value;
+        const gender = document.getElementById("male").checked ? "Male" : "Female";
+        const address = document.getElementById("address").value;
+        const image = document.getElementById("file").files;
+        if (image.length > 0) {
+            var imageToLoad = image[0];
+            var imageReader = new FileReader();
+            imageReader.onload = function (fileLoadedEvent) {
+                const imagepath = fileLoadedEvent.target.result;
+                const promise = performAjax("PUT", `http://localhost:4444/Warden/updateWarden/${id}`,
+                    JSON.stringify({ name, emailid, age, phone, qualification, gender, address, image: imagepath })
+                );
+                promise
+                    .then((OrgPromise) => {
+
+                        alert(' Successfully Updated');
+                    })
+                    .catch(err => {
+                        alert(err.message);
+                    })
+            }
+            imageReader.readAsDataURL(imageToLoad);
+
+        }
+        else {
+            const promise = performAjax("PUT", `http://localhost:4444/Warden/updateWarden/${id}`,
+                JSON.stringify({ name, emailid, age, phone, qualification, gender, address })
+            );
+            promise
+                .then((OrgPromise) => {
+
+                    alert(' Successfully Updated');
+                })
+                .catch(err => {
+                    alert(err.message);
+                })
+        }
+    }
+
+</script>
+
+<body onload="profile()"><br>
+    <h2> <center><strong>My Profile</strong></center></h2>
+
+    <div class="row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-2" style="text-align: center"><img src="" name="image" id="image" value=""
+                style="width:100px;height:100px;border-radius:50px">
+        </div>
+        <div class="col-sm-2" style="text-align: center;margin-top:40px;"><input type="file" id="file"
+                style="color:green;text-decoration-skip:right"></div>
+        <div class="col-sm-4"></div>
+
+
+    </div>
+    <div class="row">
+        <div class="col-sm-1"></div>
+        <div class="col-sm-2"></div>
+        <div class="col-sm-3">
+            <input type="hidden" placeholder="" id="id" name="id" class="form-control">
+        </div>
+        <div class="col-sm-2"></div>
+        <div class="col-sm-3">
+        </div>
+        <div class="col-sm-1"></div>
+    </div><br>
+
+    <div class="row">
+        <div class="col-sm-1"></div>
+        <div class="col-sm-2"><label>Name:</label></div>
+        <div class="col-sm-3">
+            <input type="text" placeholder="Name" id="name" class="form-control">
+        </div>
+        <div class="col-sm-2"><label> Email id:</label></div>
+        <div class="col-sm-3">
+            <input type="email" placeholder="Email id" id="emailid" class="form-control">
+        </div>
+        <div class="col-sm-1"></div>
+    </div><br>
+
+    <div class="row">
+        <div class="col-sm-1"></div>
+        <div class="col-sm-2"><label>Age:</label></div>
+        <div class="col-sm-3">
+            <input type="number" placeholder="Age" id="age" class="form-control">
+        </div>
+        <div class="col-sm-2"><label> Phone:</label></div>
+        <div class="col-sm-3">
+            <input type="number" placeholder="Phone No" id="phone" class="form-control">
+        </div>
+        <div class="col-sm-1"></div>
+    </div><br>
+
+    <div class="row">
+        <div class="col-sm-1"></div>
+        <div class="col-sm-2"><label>Qualification:</label></div>
+        <div class="col-sm-3">
+            <select class="form-control" id="qualification">
+                <option>--select--</option>
+                <option>Degree</option>
+                <option>Inter</option>
+                <option>Tenth</option>
+            </select>
+        </div>
+        <div class="col-sm-2"><label>Gender:</label></div>
+        <div class="col-sm-3">
+            <input type="radio" name="gender" id="male" value="male">Male
+            <input type="radio" name="gender" id="female" value="female">Female
+        </div>
+        <div class="col-sm-1"></div>
+    </div><br>
+
+    <div class="row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-2"><label>Address:</label></div>
+        <div class="col-sm-3">
+            <textarea name="message" class="form-control" id="address" style="height:38px;"></textarea>
+        </div>
+        <div class="col-sm-3"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-5"></div>
+        <div class="col-sm-4">
+
+            <button id="btnupdate" class="btn btn-success" onclick="updateWarden()">Update</button>
+        </div>
+        <div class="col-sm-3">
+        </div>
+
+
+    </div>
+
+
+</body>
+
+</html>

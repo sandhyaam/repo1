@@ -1,0 +1,57 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <style>
+        .nav-item:hover {
+            background-color: rgb(37, 78, 78);
+        }
+
+        span {
+            color: red;
+        }
+    </style>
+</head>
+
+<body style="font-family: verdena">
+    <div class="jumbotron text-center" style="margin:0;background-color: rgb(59, 3, 61);padding:5px;">
+        <h2 style="color:rgb(238, 230, 230);font-size: 50px">Hostel Management System</h2>
+    </div>
+    <nav class=" navbar-inverse" style="background-color: rgb(235, 218, 126);">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#"></a>
+        </div>
+        <div class="collapse navbar-collapse" id="myNavbar" style="font-size:18px;">
+            <ul class="nav navbar-nav" role="tablist">
+                <li class="nav-item"><a class="nav-link active" href="#"><span>Home</span></a></li>
+                <li class="nav-item"><a class="nav-link" target="iframe"
+                        href="http://localhost:2222/studentProfile"><span>Profile</span></a></li>
+                <li class="nav-item"><a class="nav-link" href="http://localhost:2222/studentViewMenu"
+                        target="iframe"><span>Menu</span></a></li>
+                <li class="nav-item"><a class="nav-link" href="http://localhost:2222/studentfeedback"
+                        target="iframe"><span>Feedback</span></a></li>
+                <li class="nav-item"><a class="nav-link" href="http://localhost:2222/changepassword"
+                        target="iframe"><span>Change Password</span></a></li>
+                <li style="margin-left: 300px" class="nav-item"><a class="nav-link" href="http://localhost:2222"><span class="fa fa-sign-out">Logout</span></a></li>
+            </ul>
+        </div>
+    </nav>
+    <iframe src="" id="iframe" name="iframe" style="height:500px;width:100%;border:none;margin-left:5px;"></iframe>
+
+    <div style="background-color: rgb(59, 3, 61);text-align:center;padding: 8px;">
+        <h4 style="color:rgb(238, 230, 230)">@ All rights reserved @</h4>
+    </div>
+
+
+</body>
+
+</html>

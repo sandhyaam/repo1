@@ -1,0 +1,102 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <script>
+        function performAjax(httpMethod, url, params) {
+            const myPromise = new Promise((resolve, reject) => {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+
+                        resolve(this.responseText);
+                    }
+                    if (this.status == 500) {
+                        reject({ error: true, message: "ServerError" });
+                    }
+                    if (this.status == 404) {
+                        reject({ error: true, message: "Resource not found" });
+                    }
+                };
+                xhttp.open(httpMethod, url, true);
+                xhttp.setRequestHeader("Content-Type", "application/json");
+                params ? xhttp.send(params) : xhttp.send();
+            });
+            return myPromise;
+        }
+
+
+        function wardenlogin() {
+            const phone = document.getElementById("phone").value;
+            const password = document.getElementById("password").value;
+
+            const getLoginPromise = performAjax(
+                "GET",
+                `http://localhost:4444/Warden/login?phone=${phone}&password=${password}`
+
+            );
+            getLoginPromise
+                .then((loginPromise) => {
+                    if (loginPromise == "" || loginPromise == null) {
+                        alert('Login Faild');
+                    }
+                    else {
+                        const data = JSON.parse(loginPromise);
+                        const users = [data].map(record => {
+                            return record;
+                        });
+                        users.map(user => {
+                            sessionStorage.setItem("userid", user._id);
+                            sessionStorage.setItem("name", user.name);
+                            sessionStorage.setItem("phone", user.phone);
+                            sessionStorage.setItem("emailid", user.emailid);
+
+                            window.top.location.href = "wardenpage";
+                        });
+                    }
+                })
+                .catch(err => {
+                    alert(err.message);
+                })
+        }
+
+    </script>
+</head>
+
+<body style="font-family: verdena"><br><br><br><br><br><br>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-2"><label style="font-size:20px">Mobile No:</label></div>
+            <div class="col-sm-2">
+                <input type="text" placeholder="Mobile No" id="phone" class="form-control" style="width:300px;">
+            </div>
+            <div class="col-sm-5"></div>
+        </div><br>
+        <div class="row">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-2"><label style="font-size:20px">Password:</label></div>
+            <div class="col-sm-2">
+                <input type="password" placeholder="Password" id="password" class="form-control" style="width:300px;">
+            </div>
+            <div class="col-sm-5"></div>
+        </div><br><br>
+        <div class="row">
+            <div class="col-sm-5"></div>
+            <div class="col-sm-2">
+                <button type="button" class="btn btn-primary" style="width:100px;"
+                    onclick="wardenlogin(event)">Login</button>
+            </div>
+            <div class="col-sm-2"><a href="http://localhost:2222/Warden/Wardenforgetpassword"
+                    style="text-decoration:none">Forget Password???</a></div>
+
+            <div class="col-sm-3"></div>
+        </div>
+    </div>
+
+
+</body>
+
+</html>

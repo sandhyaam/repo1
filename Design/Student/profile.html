@@ -1,0 +1,165 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<script>
+
+    const htno = sessionStorage.getItem("htno");
+    const id = sessionStorage.getItem("userid");
+    const name = sessionStorage.getItem("name");
+
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(JSON.parse(this.responseText));
+
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+    function profile() {
+        document.getElementById("htno").value =htno;
+        const promise = performAjax("GET", `http://localhost:4444/Student/profile?htno=${htno}`);
+        promise
+            .then((data) => {
+                const profile = JSON.parse(JSON.stringify(data));
+                profile.map(rec => {
+                    document.getElementById("htno").value = rec.htno;
+                    document.getElementById("name").value = rec.name;
+                    document.getElementById("fathername").value = rec.fathername;
+                    document.getElementById("branch").value = rec.branch;
+                    document.getElementById("phone").value = rec.phone;
+                    document.getElementById("emailid").value = rec.emailid;
+                    document.getElementById("address").value = rec.address;
+                    document.getElementById("image").src = rec.image;
+                });
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+
+
+    }
+
+    function updateStudent() {
+        const phone = document.getElementById("phone").value;
+        const emailid = document.getElementById("emailid").value;
+        const address = document.getElementById("address").value;
+                const promise = performAjax("PUT", `http://localhost:4444/Student/updateStudent/${id}`,
+                    JSON.stringify({  emailid,phone,address })
+                );
+                promise
+                    .then((OrgPromise) => {
+
+                        alert(' Successfully Updated');
+                    })
+                    .catch(err => {
+                        alert(err.message);
+                    })
+
+        }
+      
+
+
+
+
+</script>
+
+<body onload="profile()"><br>
+    <h2> <center><strong>My Profile</strong></center></h2><br>
+
+    <div class="row">
+        <input type="hidden" placeholder="" id="id" name="id" class="form-control">
+    </div>
+    <div class="row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-4" style="text-align:center">
+            <img name="image" id="image"  alt="photo"
+            style="width:100px;height:100px;border-radius:50px">
+        </div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-1"></div>
+        <div class="col-sm-2"><label>H.T No:</label></div>
+        <div class="col-sm-3"> <input type="text" placeholder="H.T No" id="htno" class="form-control" disabled>
+        </div>
+
+        <div class="col-sm-2"><label>Name:</label></div>
+        <div class="col-sm-3"><input type="text" placeholder="Name" id="name" class="form-control" disabled>
+        </div>
+        <div class="col-sm-1"></div>
+
+    </div><br><br>
+    <div class="row">
+        <div class="col-sm-1"></div>
+        <div class="col-sm-2"><label> Father Name:</label></div>
+        <div class="col-sm-3"> <input type="text" placeholder=" Father Name" id="fathername" class="form-control" disabled>
+        </div>
+        
+        <div class="col-sm-2"><label>Branch:</label></div>
+        <div class="col-sm-3"> <select class="form-control" id="branch" disabled>
+            <option>--select--</option>
+            <option>ECE</option>
+            <option>CSE</option>
+            <option>MECH</option>
+            <option>CIVIL</option>
+            <option>EEE</option>
+        </select>
+    </div>
+    <div class="col-sm-1"></div>
+
+    </div><br><br>
+    
+   
+    <div class="row">
+        <div class="col-sm-1"></div>
+
+        <div class="col-sm-2"><label>Phone:</label></div>
+        <div class="col-sm-3"><input type="number" placeholder="Phone No" id="phone" class="form-control">
+        </div>
+        <div class="col-sm-2"><label>Email id:</label></div>
+        <div class="col-sm-3"><input type="email" placeholder="Email id" id="emailid" class="form-control">
+        </div>
+        <div class="col-sm-1"></div>
+
+    </div>
+    <br><br>
+   
+    <div class="row">
+        <div class="col-sm-4"></div>
+
+        <div class="col-sm-1"><label>Address:</label></div>
+        <div class="col-sm-3"><textarea name="message" class="form-control" id="address"
+                style="height:38px;"></textarea>
+        </div>
+      
+        <div class="col-sm-4"></div>
+    </div><br><br>
+    <div class="row">
+        <div class="col-sm-4"></div>
+
+        <div class="col-sm-4" style="text-align: center"><button id="btnupdate" class="btn btn-success" onclick="updateStudent()">Update</button>
+
+        </div>
+      
+        <div class="col-sm-4"></div>
+    </div><br><br>
+
+
+
+</body>

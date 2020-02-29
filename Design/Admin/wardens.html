@@ -1,0 +1,352 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <style>
+        .wardens {
+            margin-left: 800px;
+            top: 50px;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
+
+        .tablecss {
+            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+            border-collapse: collapse;
+            font-size: 15px;
+
+        }
+
+        .tablecss td,
+        .tablecss th {
+            border: 1px solid #ddd;
+            padding: 5px;
+        }
+
+        .tablecss tr:nth-child(odd) {
+            background-color: #f2f2f2;
+        }
+
+        .tablecss tr:hover {
+            background-color: #ddd;
+
+        }
+
+        .tablecss th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: center;
+            background-color: lavender;
+            font-weight: bold;
+        }
+    </style>
+    <script>
+        function performAjax(httpMethod, url, params) {
+            const myPromise = new Promise((resolve, reject) => {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        resolve(this.responseText);
+                    }
+                    if (this.status == 500) {
+                        reject({ error: true, message: "ServerError" });
+                    }
+                    if (this.status == 404) {
+                        reject({ error: true, message: "Resource not found" });
+                    }
+                };
+                xhttp.open(httpMethod, url, true);
+                xhttp.setRequestHeader("Content-Type", "application/json");
+                params ? xhttp.send(params) : xhttp.send();
+            });
+            return myPromise;
+        }
+        function enableAdd() {
+            event.preventDefault();
+            document.getElementById('myModal').style.display = 'block';
+            document.getElementById("add").style.display = 'block';
+            document.getElementById("btnupdate").style.display = 'none';
+            document.getElementById("name").focus();
+        }
+
+        function LoadData() {
+            const getdata1 = performAjax("GET", "http://localhost:4444/Admin/viewWarden");
+            getdata1
+                .then((details) => {
+
+                    showData(details);
+
+                })
+                .catch(err => {
+                    alert(err.message);
+                })
+        }
+
+
+        function showData(records) {
+            const wardendata = JSON.parse(records);
+            const tableHeaderString = '<tr><th>S.No</th><th>Name</th><th>Email Id</th><th>Age</th><th>Phone No</th><th>Qualification</th><th>Gender</th><th>Address</th><th>Photo</th><th>Action</th></tr>';
+            let tableRowString = '';
+            wardendata.map((warden, index) => {
+                let edit = `<i id="${warden._id}" class="fa fa-pencil-square-o fa-2px" style="color:blue" onclick="editRecords(event)" data-toggle="modal" data-target="#myModal" aria-hidden="true" ></i>`;
+                let del = `<i id="${warden._id}" class="fa fa-trash fa-2px" aria-hidden="true" style="color:red;font:size:20%" onclick="deleteRecord(event)"></i>`;
+                let download = `<i id="${warden._id}" onclick="download(event)"  style="color:blue" class="fa fa-download fa-2px" aria-hidden="true"></i>`;
+
+                tableRowString += `<tr><td>${index + 1}</td><td>${warden.name}</td><td>${warden.emailid}</td><td>${warden.age}</td><td>${warden.phone}</td><td>${warden.qualification}</td><td>${warden.gender}</td><td>${warden.address}</td><td><img src="${warden.image}" style="width:80px;height:70px"></td>
+                        <td>${edit}&nbsp;${del}&nbsp;${download}</td></tr>`;
+            });
+            const tableString = `<table border="1">${tableHeaderString}${tableRowString}</table>`;
+
+            document.getElementById('table').innerHTML = tableString;
+        }
+        function download(event) {
+            event.preventDefault();
+            const getPromise = performAjax("GET", `http://localhost:4444/Admin/wardendownload/${event.target.id}`);
+            getPromise
+                .then(data => {
+                    [data].map(editRecord => {
+                        window.open(JSON.parse(editRecord).image);
+                    })
+                })
+                .catch(err => {
+                    alert(err.message);
+                });
+
+        }
+        function editRecords(event) {
+            event.preventDefault();
+            const getPromise = performAjax("GET", `http://localhost:4444/Admin/getWardenData/${event.target.id}`);
+            getPromise
+                .then(datas => {
+                    const get = JSON.parse(datas);
+
+                    get.map(editRecord => {
+                        document.getElementById("add").style.display = 'none';
+                        document.getElementById("id").value = editRecord._id;
+                        document.getElementById("name").value = editRecord.name;
+                        document.getElementById("emailid").value = editRecord.emailid;
+                        document.getElementById("age").value = editRecord.age;
+                        document.getElementById("phone").value = editRecord.phone;
+                        document.getElementById("qualification").value = editRecord.qualification;
+                        editRecord.gender === 'Male' ? document.getElementById("male").checked = true : document.getElementById("female").checked = true;
+                        document.getElementById("address").value = editRecord.address;
+                        document.getElementById("image").src = editRecord.image;
+
+                    });
+                })
+                .catch(err => {
+                    alert(err.message);
+                })
+        }
+        function updateWarden() {
+            const id = document.getElementById("id").value;
+            document.getElementById("name").focus();
+            const name = document.getElementById("name").value;
+            const emailid = document.getElementById("emailid").value;
+            const age = document.getElementById("age").value;
+            const phone = document.getElementById("phone").value;
+            const qualification = document.getElementById("qualification").value;
+            const gender = document.getElementById("male").checked ? "Male" : "Female";
+            const address = document.getElementById("address").value;
+            const image = document.getElementById("file").files;
+            if (image.length > 0) {
+                var imageToLoad = image[0];
+                var imageReader = new FileReader();
+                imageReader.onload = function (fileLoadedEvent) {
+                    const imagepath = fileLoadedEvent.target.result;
+                    const getOrgPromise = performAjax(
+                        "PUT",
+                        `http://localhost:4444/Admin/updateWarden/${id}`,
+                        JSON.stringify({ name, emailid, age, phone, qualification, gender, address, image: imagepath })
+                    );
+                    getOrgPromise
+                        .then((OrgPromise) => {
+                            LoadData();
+                            alert(' Successfully Updated');
+                            cancel();
+                        })
+                        .catch(err => {
+                            alert(err.message);
+                        })
+                }
+                imageReader.readAsDataURL(imageToLoad);
+            }
+            else {
+                const getOrgPromise = performAjax(
+                    "PUT",
+                    `http://localhost:4444/Admin/updateWarden/${id}`,
+                    JSON.stringify({ name, emailid, age, phone, qualification, gender, address })
+                );
+                getOrgPromise
+                    .then((OrgPromise) => {
+                        LoadData();
+                        alert(' Successfully Updated');
+                        cancel();
+                    })
+                    .catch(err => {
+                        alert(err.message);
+                    })
+            }
+
+        }
+
+        function cancel() {
+            event.preventDefault();
+            document.getElementById("name").value = "";
+            document.getElementById("emailid").value = "";
+            document.getElementById("age").value = "";
+            document.getElementById("phone").value = "";
+            document.getElementById("qualification").value = "";
+            document.getElementById("gender").value = "";
+            document.getElementById("address").value = "";
+
+        }
+
+        function deleteRecord(event) {
+            const deletePromise = performAjax("DELETE", `http://localhost:4444/Admin/deleteWarden/${event.target.id}`);
+            deletePromise
+                .then((remainingData) => {
+                    LoadData();
+                })
+                .catch(err => {
+                    alert(err.message);
+                })
+        }
+
+
+
+    </script>
+</head>
+
+<body onload="LoadData()"><br>
+    <form>
+        <div class="wardens">
+            <h3><a href="http://localhost:2222/wardendata" style="text-decoration: none" target="_self" class=""
+                    data-target="model" data-toggle="#myModal" style="color:brown;font-weight:20 ">Add Wardens</a></h3>
+        </div>
+        <div>
+
+            <center>
+                <table id="table" border="1" class="tablecss"></table>
+            </center>
+            <div class="">
+            </div>
+            <div class="container">
+                <div class="modal fade" id="myModal" role="dialog" style="margin-top:-25px;">
+                    <div class="modal-dialog">
+                        <div class="modal-content" style="background-color: rgb(255, 250, 238)">
+                            <div class="modal-header" style="background-color: lightcoral">
+                                <div class="modal-title">
+                                    <button type="button" class="close" data-dismiss="modal">&times</button></div>
+                                <center>
+                                    <h2>Warden</h2>
+                                </center>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-sm-1"></div>
+                                    <div class="col-sm-2"></div>
+                                    <div class="col-sm-3">
+                                        <input type="hidden" placeholder="" id="id" name="id" class="form-control">
+                                    </div>
+                                    <div class="col-sm-2"></div>
+                                    <div class="col-sm-3">
+                                    </div>
+                                    <div class="col-sm-1"></div>
+                                </div><br>
+
+                                <div class="row">
+                                    <div class="col-sm-1"></div>
+                                    <div class="col-sm-2"><label>Name:</label></div>
+                                    <div class="col-sm-3">
+                                        <input type="text" placeholder="Name" id="name" class="form-control">
+                                    </div>
+                                    <div class="col-sm-2"><label> Email id:</label></div>
+                                    <div class="col-sm-3">
+                                        <input type="email" placeholder="Email id" id="emailid" class="form-control">
+                                    </div>
+                                    <div class="col-sm-1"></div>
+                                </div><br>
+
+                                <div class="row">
+                                    <div class="col-sm-1"></div>
+                                    <div class="col-sm-2"><label>Age:</label></div>
+                                    <div class="col-sm-3">
+                                        <input type="number" placeholder="Age" id="age" class="form-control">
+                                    </div>
+                                    <div class="col-sm-2"><label> Phone:</label></div>
+                                    <div class="col-sm-3">
+                                        <input type="number" placeholder="Phone No" id="phone" class="form-control">
+                                    </div>
+                                    <div class="col-sm-1"></div>
+                                </div><br>
+
+                                <div class="row">
+                                    <div class="col-sm-1"></div>
+                                    <div class="col-sm-2"><label>Qualification:</label></div>
+                                    <div class="col-sm-3">
+                                        <select class="form-control" id="qualification">
+                                            <option>--select--</option>
+                                            <option>Degree</option>
+                                            <option>Inter</option>
+                                            <option>Tenth</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-2"><label>Gender:</label></div>
+                                    <div class="col-sm-3">
+                                        <input type="radio" name="gender" id="male" value="male">Male
+                                        <input type="radio" name="gender" id="female" value="female">Female
+                                    </div>
+                                    <div class="col-sm-1"></div>
+                                </div><br>
+
+                                <div class="row">
+                                    <div class="col-sm-1"></div>
+                                    <div class="col-sm-2"><label>Address:</label></div>
+                                    <div class="col-sm-2">
+                                        <textarea name="message" class="form-control" id="address"
+                                            style="height:38px;"></textarea>
+                                    </div>
+                                    <div class="col-sm-3" id="imagediv"><img src="" id="image"
+                                            style="width:100px;height:100px;border-radius:50px">
+                                    </div>
+                                    <div class="col-sm-3"><label>Image:</label>
+                                        <input type="file" id="file" class=""></div>
+
+                                    <div class="col-sm-1"></div>
+                                </div><br>
+
+                                <div class="modal-footer">
+                                    <div class="row">
+                                        <div class="col-sm-5"></div>
+                                        <div class="col-sm-4">
+                                            <button type="button" class="btn btn-primary" id="add"
+                                                onclick="AddWarden(event)" data-dismiss="modal">Add</button>
+                                            <button id="btnupdate" class="btn btn-success"
+                                                onclick="updateWarden()">Update</button>
+                                        </div>
+                                        <div class="col-sm-3">
+                                            <button id="cancel" class="btn btn-danger"
+                                                onclick="cancel()">Cancel</button>
+
+                                        </div>
+
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </form>
+    </div>
+
+</body>
+
+</html>

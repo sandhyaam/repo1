@@ -1,0 +1,95 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<style>
+    .menu {
+        position: fixed;
+        top: 50px;
+        right: 250px;
+    }
+
+    .tablecss {
+        font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+    }
+
+    .tablecss td,
+    .tablecss th {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    .tablecss tr:nth-child(odd) {
+        background-color: #f2f2f2;
+    }
+
+    .tablecss tr:hover {
+        background-color: #ddd;
+    }
+
+    .tablecss th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: center;
+        background-color: lavender;
+        font-weight: bold;
+    }
+</style>
+<script>
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+    function LoadData() {
+        event.preventDefault();
+        const getdata = performAjax("GET", "http://localhost:4444/Warden/viewRooms");
+        getdata
+            .then((details) => {
+                showData(details);
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+    }
+    function showData(records) {
+        const roomdata = JSON.parse(records);
+        const tableHeaderString = '<tr><th>S.No</th><th>Room No</th><th>Total Beds</th><th>Vacancy Beds</th></tr>';
+        let tableRowString = '';
+        if (roomdata.length > 0) {
+            roomdata.map((rooms, index) => {
+                tableRowString += `<tr><td>${index + 1}</td><td>${rooms.roomno}</td><td>${rooms.total}</td><td>${rooms.vacancies}</td></tr>`;
+            });
+            document.getElementById('table').innerHTML = `<table border="1">${tableHeaderString}${tableRowString}</table>`;
+        }
+        else {
+            tableRowString = `<tr><td colspan="6" align="center">No Data Found</td></tr>`
+            document.getElementById('table').innerHTML = `${tableHeaderString}${tableRowString}`;
+        }
+    }        
+</script>
+
+<body onload="LoadData()">
+    <div style="height:50px"></div>
+ <h2> <center><strong>Availability of Rooms and their vacancy of beds</strong></center></h2>
+  <br>  <center>
+        <table id="table" border="1" class="tablecss"></table>
+    </center>
+</body>
+
+</html>

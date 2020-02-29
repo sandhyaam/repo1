@@ -1,0 +1,208 @@
+<html>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+<head>
+    <script>
+        function performAjax(httpMethod, url, params) {
+            const myPromise = new Promise((resolve, reject) => {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        resolve(this.responseText);
+                    }
+                    if (this.status == 500) {
+                        reject({ error: true, message: "ServerError" });
+                    }
+                    if (this.status == 404) {
+                        reject({ error: true, message: "Resource not found" });
+                    }
+                };
+                xhttp.open(httpMethod, url, true);
+                xhttp.setRequestHeader("Content-Type", "application/json");
+                params ? xhttp.send(params) : xhttp.send();
+            });
+            return myPromise;
+        }
+
+        function enableAdd() {
+            event.preventDefault();
+            document.getElementById('myModal').style.display = 'block';
+            document.getElementById("add").style.display = 'block';
+            document.getElementById("btnupdate").style.display = 'none';
+            document.getElementById("name").focus();
+            document.getElementById("imagediv").style.display = 'none';
+
+        }
+        function addStudents(event) {
+            event.preventDefault();
+            const htno = document.getElementById("htno").value;
+            const name = document.getElementById("name").value;
+            const fathername = document.getElementById("fathername").value;
+            const branch = document.getElementById("branch").value;
+            const roomno = document.getElementById("roomno").value;
+            const phone = document.getElementById("phone").value;
+            const emailid = document.getElementById("emailid").value;
+            const password = Math.floor((Math.random() * 100) + 1);
+            const address = document.getElementById("address").value;
+            const totalfee = document.getElementById("totalfee").value;
+            const paidamount = document.getElementById("paidamount").value;
+            const due = document.getElementById("due").value;
+            const date = document.getElementById("date").value;
+            const image = document.getElementById("file").files;
+
+            if (image.length > 0) {
+                var imageToLoad = image[0];
+                var imageReader = new FileReader();
+                imageReader.onload = function (fileLoadedEvent) {
+                    const imagepath = fileLoadedEvent.target.result;
+                    const addUniPromise = performAjax(
+                        "POST", "http://localhost:4444/Admin/addStudent",
+                        JSON.stringify({ htno, name, fathername, branch, roomno, phone, emailid, password, address, totalfee, paidamount, newpayment: paidamount, due: totalfee - paidamount, date, image: imagepath })
+                    );
+                    addUniPromise
+                        .then(isExist => {
+                            const data = JSON.parse(isExist);
+                            if (data.code) {
+                                alert("exists");
+                            }
+                            else {
+                                alert("Added Successfully");
+                                window.location.href = "students";
+
+                            }
+
+                        }
+                        )
+                        .catch(err => {
+                            alert(err.message);
+                        });
+                }
+                imageReader.readAsDataURL(imageToLoad);
+            }
+        }
+        function loaddata() {
+            const getdata = performAjax("GET", "http://localhost:4444/Warden/viewRooms");
+            getdata
+                .then((details) => {
+                    getRoomno(details);
+
+                })
+                .catch(err => {
+                    alert(err.message);
+                })
+        }
+        function getRoomno(roomno) {
+            let name = document.getElementById("roomno");
+            const get = JSON.parse(roomno);
+            for (let i = 0; i < get.length; i++) {
+                const getuni = document.createElement("OPTION");
+                getuni.innerHTML = get[i].roomno;
+                getuni.value = get[i].roomno;
+                name.options.add(getuni);
+            }
+
+        }
+        function due() {
+            const totalfee = document.getElementById("totalfee").value;
+            const paidamount = document.getElementById("paidamount").value;
+            const due = document.getElementById("due").value = totalfee - paidamount;
+        }
+
+    </script>
+</head>
+
+<body onload="loaddata()"><br><br>
+    <h2><center><B>STUDENT DETAILS</B></center></h2><br>
+    <div class="row">
+        <input type="hidden" placeholder="" id="id" name="id" class="form-control">
+    </div>
+    <div class="row">
+        <div class="col-sm-1"></div>
+        <div class="col-sm-3"><label>H.T No:</label>
+            <input type="text" placeholder="H.T No" id="htno" class="form-control">
+        </div>
+        <div class="col-sm-4"><label>Name:</label>
+            <input type="text" placeholder="Name" id="name" class="form-control">
+        </div>
+        <div class="col-sm-3"><label> Father Name:</label>
+            <input type="text" placeholder=" Father Name" id="fathername" class="form-control">
+        </div>
+        <div class="col-sm-1"></div>
+    </div><br><br>
+
+    <div class="row">
+        <div class="col-sm-1"></div>
+        <div class="col-sm-3"><label>Branch:</label>
+            <select class="form-control" id="branch">
+                <option>--select--</option>
+                <option>ECE</option>
+                <option>CSE</option>
+                <option>MECH</option>
+                <option>CIVIL</option>
+                <option>EEE</option>
+            </select>
+        </div>
+        <div class="col-sm-4"><label>Room No:</label>
+            <select class="form-control" id="roomno">
+                <option value="">--select--</option>
+
+            </select>
+        </div>
+        <div class="col-sm-3"><label>Phone:</label>
+            <input type="number" placeholder="Phone No" id="phone" class="form-control">
+        </div>
+        <div class="col-sm-1"></div>
+    </div><br><br>
+
+    <div class="row">
+        <div class="col-sm-1"></div>
+        <div class="col-sm-3"><label>Email id:</label>
+            <input type="email" placeholder="Email id" id="emailid" class="form-control">
+        </div>
+
+        <div class="col-sm-4"><label>Address:</label>
+            <textarea name="message" class="form-control" id="address" style="height:38px;"></textarea>
+        </div>
+        <div class="col-sm-3"><label>Total Fee:</label>
+            <input type="number" placeholder="Total fee" id="totalfee" class="form-control">
+        </div>
+        <div class="col-sm-1"></div>
+    </div><br><br>
+
+    <div class="row">
+        <div class="col-sm-1"></div>
+        <div class="col-sm-4"><label>Advance Amount:</label><br>
+            <input type="number" placeholder="Paid amount" id="paidamount" onchange="due(this)" class="form-control">
+        </div>
+        <div class="col-sm-3"><label>Due:</label>
+            <input type="text" id="due" disabled class="form-control">
+        </div>
+        <div class="col-sm-3"><label>Date:</label>
+            <input type="text" id="date" class="form-control">
+        </div>
+        <div class="col-sm-1"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-3" id="imagediv" style="display: none"><img src="" id="image"
+                style="width:100px;height:100px;border-radius:50px">
+        </div>
+        <div class="col-sm-3"><label>Image:</label>
+            <input type="file" id="file" class=""></div>
+
+        <div class="col-sm-3"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-4">
+            <button type="button" id="add" class="btn btn-primary" data-dismiss="modal"
+                onclick="addStudents(event)">Add</button>
+        </div>
+        <div class="col-sm-4"></div>
+
+    </div>
+</body>
+
+</html>

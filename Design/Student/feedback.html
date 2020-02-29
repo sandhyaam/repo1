@@ -1,0 +1,85 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<style>
+    .nav-item:hover {
+        background-color: rgb(37, 78, 78);
+    }
+</style>
+<script>
+    const htno = sessionStorage.getItem("htno");
+    const userid = sessionStorage.getItem("userid");
+
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+
+    function add(event) {
+        event.preventDefault();
+        const htno = document.getElementById("htno").value;
+        const feedback = document.getElementById("feedback").value;
+
+        const addUniPromise = performAjax(
+            "POST", "http://localhost:4444/Student/feedbackadd",
+            JSON.stringify({ htno, feedback })
+        );
+        addUniPromise
+            .then(isExist => {
+
+                alert("Added Successfully");
+            })
+            .catch(err => {
+                alert(err.message);
+            });
+    }
+    function getHtno() {
+        document.getElementById("htno").value = htno;
+    }
+</script>
+<body onload="getHtno()">
+    <div class="container"><br>
+        <center>
+            <h4><strong>Feedback</strong></h4>
+        </center>
+        <br>
+        <div class="row">
+            <div class="col-sm-4"></div>
+            <div class="col-sm-2" style="text-align-last: auto"><label>Hallticket No:</label></div>
+            <div class="col-sm-3">
+                <input type="text" placeholder="" id="htno" disabled="false" class="form-control">
+            </div>
+            <div class="col-sm-3"></div>
+        </div><br>
+        <div class="row">
+            <div class="col-sm-4"></div>
+            <div class="col-sm-2" style="text-align-last: auto"><label>Feedback:</label></div>
+            <div class="col-sm-3">
+                <input type="text" placeholder="Feedback" id="feedback" class="form-control">
+            </div>
+            <div class="col-sm-3"></div>
+        </div><br>
+        <div class="row">
+            <div class="col-sm-5"></div>
+            <div class="col-sm-2">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="add(event)">Add</button>
+            </div>
+        </div>
+    </div>
+</body>

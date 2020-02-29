@@ -1,0 +1,166 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<script>
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+    function AddWarden(event) {
+        event.preventDefault();
+        const name = document.getElementById("name").value;
+        const emailid = document.getElementById("emailid").value;
+        const password = Math.floor((Math.random() * 100) + 1);
+        const age = document.getElementById("age").value;
+        const phone = document.getElementById("phone").value;
+        const qualification = document.getElementById("qualification").value;
+        const gender = document.getElementById("male").checked ? "Male" : "Female";
+        const address = document.getElementById("address").value;
+        const image = document.getElementById("image").files;
+
+        if (image.length > 0) {
+            var imageToLoad = image[0];
+            var imageReader = new FileReader();
+            imageReader.onload = function (fileLoadedEvent) {
+                const imagepath = fileLoadedEvent.target.result;
+
+                const addUniPromise = performAjax(
+                    "POST", "http://localhost:4444/Admin/addWarden",
+                    JSON.stringify({ name, emailid, password, age, phone, qualification, gender, address, image: imagepath })
+                );
+                addUniPromise
+                    .then(isExist => {
+
+                        alert("Added Successfully");
+                        window.location.href = "addwardens";
+                    })
+                    .catch(err => {
+                        alert(err.message);
+                    });
+            }
+            imageReader.readAsDataURL(imageToLoad);
+        }
+    }
+    function enableAdd() {
+        event.preventDefault();
+        document.getElementById("add").style.display = 'block';
+        document.getElementById("btnupdate").style.display = 'none';
+        document.getElementById("name").focus();
+    }
+
+    function cancel() {
+            event.preventDefault();
+            document.getElementById("name").value = "";
+            document.getElementById("emailid").value = "";
+            document.getElementById("age").value = "";
+            document.getElementById("phone").value = "";
+            document.getElementById("qualification").value = "";
+            document.getElementById("gender").value = "";
+            document.getElementById("address").value = "";
+
+        }
+</script>
+<body><br><br>
+    <h2><center><B>WARDEN DETAILS</B></center></h2><br>
+
+<div class="row">
+    <div class="col-sm-1"></div>
+    <div class="col-sm-2"></div>
+    <div class="col-sm-3">
+        <input type="hidden" placeholder="" id="id" name="id" class="form-control">
+    </div>
+    <div class="col-sm-2"></div>
+    <div class="col-sm-3">
+    </div>
+    <div class="col-sm-1"></div>
+</div><br>
+
+<div class="row">
+    <div class="col-sm-1"></div>
+    <div class="col-sm-2"><label>Name:</label></div>
+    <div class="col-sm-3">
+        <input type="text" placeholder="Name" id="name" class="form-control">
+    </div>
+    <div class="col-sm-2"><label> Email id:</label></div>
+    <div class="col-sm-3">
+        <input type="email" placeholder="Email id" id="emailid" class="form-control">
+    </div>
+    <div class="col-sm-1"></div>
+</div><br>
+
+<div class="row">
+    <div class="col-sm-1"></div>
+    <div class="col-sm-2"><label>Age:</label></div>
+    <div class="col-sm-3">
+        <input type="number" placeholder="Age" id="age" class="form-control">
+    </div>
+    <div class="col-sm-2"><label> Phone:</label></div>
+    <div class="col-sm-3">
+        <input type="number" placeholder="Phone No" id="phone" class="form-control">
+    </div>
+    <div class="col-sm-1"></div>
+</div><br>
+
+<div class="row">
+    <div class="col-sm-1"></div>
+    <div class="col-sm-2"><label>Qualification:</label></div>
+    <div class="col-sm-3">
+        <select class="form-control" id="qualification">
+            <option>--select--</option>
+            <option>Degree</option>
+            <option>Inter</option>
+            <option>Tenth</option>
+        </select>
+    </div>
+    <div class="col-sm-2"><label>Gender:</label></div>
+    <div class="col-sm-3">
+        <input type="radio" name="gender" id="male" value="male">Male
+        <input type="radio" name="gender" id="female" value="female">Female
+    </div>
+    <div class="col-sm-1"></div>
+</div><br>
+
+<div class="row">
+    <div class="col-sm-1"></div>
+    <div class="col-sm-2"><label>Address:</label></div>
+    <div class="col-sm-3">
+        <textarea name="message" class="form-control" id="address" style="height:38px;"></textarea>
+    </div>
+    <div class="col-sm-2"><label>Image:</label></div>
+    <div class="col-sm-3">
+        <input type="file" name="image" id="image" accept="image/*">
+
+    </div>
+    <div class="col-sm-1"></div>
+</div><br>
+
+<div class="row">
+    <div class="col-sm-5"></div>
+    <div class="col-sm-4">
+        <button type="button" class="btn btn-primary" id="add" onclick="AddWarden(event)"
+            data-dismiss="modal">Add</button>
+    </div>
+    <div class="col-sm-3">
+        <button id="cancel" class="btn btn-danger" onclick="cancel()">Cancel</button>
+
+    </div>
+
+
+</div>
+</body>

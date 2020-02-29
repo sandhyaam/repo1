@@ -1,0 +1,464 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <style>
+        .students {
+            right: 250px;
+            margin-left: 800px;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
+
+        .tablecss {
+            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            border-collapse: collapse;
+            width: 80%;
+        }
+
+        .tablecss td,
+        .tablecss th {
+            border: 1px solid #ddd;
+            padding: 5px;
+        }
+
+        .tablecss tr:nth-child(odd) {
+            background-color: #f2f2f2;
+        }
+
+        .tablecss tr:hover {
+            background-color: #ddd;
+        }
+
+        .tablecss th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: center;
+            background-color: #e6e6fa;
+            color: black;
+            font-weight: bold;
+        }
+    </style>
+    <script>
+        const htno = sessionStorage.getItem("htno");
+        const id = sessionStorage.getItem("userid");
+        const totalfee = sessionStorage.getItem("totalfee");
+
+        function performAjax(httpMethod, url, params) {
+            const myPromise = new Promise((resolve, reject) => {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        resolve(this.responseText);
+                    }
+                    if (this.status == 500) {
+                        reject({ error: true, message: "ServerError" });
+                    }
+                    if (this.status == 404) {
+                        reject({ error: true, message: "Resource not found" });
+                    }
+                };
+                xhttp.open(httpMethod, url, true);
+                xhttp.setRequestHeader("Content-Type", "application/json");
+                params ? xhttp.send(params) : xhttp.send();
+            });
+            return myPromise;
+        }
+
+        function enableAdd() {
+            event.preventDefault();
+            document.getElementById('myModal').style.display = 'block';
+            document.getElementById("add").style.display = 'block';
+            document.getElementById("btnupdate").style.display = 'none';
+            document.getElementById("name").focus();
+            document.getElementById("imagediv").style.display = 'none';
+
+        }
+        function addStudents(event) {
+            event.preventDefault();
+            const htno = document.getElementById("htno").value;
+            const name = document.getElementById("name").value;
+            const fathername = document.getElementById("fathername").value;
+            const branch = document.getElementById("branch").value;
+            const roomno = document.getElementById("roomno").value;
+            const phone = document.getElementById("phone").value;
+            const emailid = document.getElementById("emailid").value;
+            const password = Math.floor((Math.random() * 100) + 1);
+            const address = document.getElementById("address").value;
+            const totalfee = document.getElementById("totalfee").value;
+            const paidamount = document.getElementById("paidamount").value;
+            const due = document.getElementById("due").value;
+            const date = document.getElementById("date").value;
+            const image = document.getElementById("file").files;
+
+            if (image.length > 0) {
+                var imageToLoad = image[0];
+                var imageReader = new FileReader();
+                imageReader.onload = function (fileLoadedEvent) {
+                    const imagepath = fileLoadedEvent.target.result;
+                    const addUniPromise = performAjax(
+                        "POST", "http://localhost:4444/Admin/addStudent",
+                        JSON.stringify({ htno, name, fathername, branch, roomno, phone, emailid, password, address, totalfee, paidamount, newpayment: paidamount, due: totalfee - paidamount, date, image: imagepath })
+                    );
+                    addUniPromise
+                        .then(isExist => {
+                            const data = JSON.parse(isExist);
+                            if (data.code) {
+                                alert("exists");
+                            }
+                            else {
+                                alert("Added Successfully");
+
+                            }
+
+                        }
+                        )
+                        .catch(err => {
+                            alert(err.message);
+                        });
+                }
+                imageReader.readAsDataURL(imageToLoad);
+            }
+        }
+        function due() {
+            const totalfee = document.getElementById("totalfee").value;
+            const paidamount = document.getElementById("paidamount").value;
+            const due = document.getElementById("due").value = totalfee - paidamount;
+        }
+        function LoadData() {
+            const getdata1 = performAjax("GET", "http://localhost:4444/Admin/viewStudent");
+            getdata1
+                .then((details) => {
+                    showData(details);
+                })
+                .catch(err => {
+                    alert(err.message);
+                })
+            const getdata = performAjax("GET", "http://localhost:4444/Warden/viewRooms");
+            getdata
+                .then((details) => {
+
+                    getRoomno(details);
+
+                })
+                .catch(err => {
+                    alert(err.message);
+                })
+        }
+        function getRoomno(roomno) {
+            let name = document.getElementById("roomno");
+            const get = JSON.parse(roomno);
+            for (let i = 0; i < get.length; i++) {
+                const getuni = document.createElement("OPTION");
+                getuni.innerHTML = get[i].roomno;
+                getuni.value = get[i].roomno;
+                name.options.add(getuni);
+            }
+
+        }
+
+
+        function showData(records) {
+            const studentdata = JSON.parse(records);
+            const tableHeaderString = '<tr style="font-family:verdena"><th>S.No</th><th>HallTicket No</th><th>Name</th><th>Address</th><th>Branch</th><th>Room No</th><th>Mobile No</th><th>Total Fee</th><th>Advance Amount</th><th>Due</th><th>Date</th><th>Photo</th><th style="width:120px">Action</th></tr>';
+            let tableRowString = '';
+
+            studentdata.map((student, index) => {
+                let edit = `<i id="${student._id}" onclick="editRecords(event)" data-toggle="modal" data-target="#myModal" style="color:blue" class="fa fa-pencil-square-o fa-2px" aria-hidden="true"></i>`;
+                let del = `<i id="${student._id}, ${student.roomno}"  onclick="deleteRecord(event)" style="color:red;font:size:20%" class="fa fa-trash fa-2px" aria-hidden="true"></i>`;
+                let Payment = `<i id="${student.htno}"   onclick="payment(event)" class="fa fa-credit-card-alt fa-2px" aria-hidden:"true"></i>`;
+                let download = `<i id="${student._id}" onclick="download(event)"  style="color:blue" class="fa fa-download fa-2px" aria-hidden="true"></i>`;
+
+                tableRowString += `<tr style="text-align:center"><td>${index + 1}</td><td>${student.htno}</td><td>${student.name}</td><td>${student.address}</td><td>${student.branch}</td><td>${student.roomno}</td><td>${student.phone}</td><td>${student.totalfee}</td><td>${student.paidamount}</td><td>${student.due}</td><td>${student.date}</td><td><img src="${student.image}" style="width:80px;height:70px"></td>
+                        <td>${edit}&nbsp;${del}&nbsp;&nbsp;${Payment}&nbsp;${download}</td></tr>`;
+            });
+            const tableString = `<table border="1">${tableHeaderString}${tableRowString}</table>`;
+
+            document.getElementById('table').innerHTML = tableString;
+        }
+        function editRecords(event) {
+            event.preventDefault();
+            const getPromise = performAjax("GET", `http://localhost:4444/Admin/getData/${event.target.id}`);
+            getPromise
+                .then(data => {
+                    const get = JSON.parse(data);
+                    get.map(editRecord => {
+                        document.getElementById("add").style.display = 'none';
+                        document.getElementById("id").value = editRecord._id;
+                        document.getElementById("htno").value = editRecord.htno;
+                        document.getElementById("name").value = editRecord.name;
+                        document.getElementById("fathername").value = editRecord.fathername;
+                        document.getElementById("branch").value = editRecord.branch;
+                        document.getElementById("roomno").value = editRecord.roomno;
+                        sessionStorage.setItem("roomno", editRecord.roomno);
+                        document.getElementById("phone").value = editRecord.phone;
+                        document.getElementById("emailid").value = editRecord.emailid;
+                        document.getElementById("address").value = editRecord.address;
+                        document.getElementById("totalfee").value = editRecord.totalfee;
+                        document.getElementById("paidamount").value = editRecord.paidamount;
+                        document.getElementById("due").value = editRecord.due;
+                        document.getElementById("date").value = editRecord.date;
+                        document.getElementById("image").src = editRecord.image;
+                    })
+
+                })
+                .catch(err => {
+                    alert(err.message);
+                })
+
+        }
+        function download(event) {
+            event.preventDefault();
+            const getPromise = performAjax("GET", `http://localhost:4444/Admin/getData/${event.target.id}`);
+            getPromise
+                .then(data => {
+                    [data].map(editRecord => {
+                        window.open(JSON.parse(editRecord).image);
+                    })
+                })
+                .catch(err => {
+                    alert(err.message);
+                });
+
+        }
+        function updateStudents() {
+            const id = document.getElementById("id").value;
+            document.getElementById("htno").focus();
+            const htno = document.getElementById("htno").value;
+            const name = document.getElementById("name").value;
+            const fathername = document.getElementById("fathername").value;
+            const branch = document.getElementById("branch").value;
+            const roomno = document.getElementById("roomno").value;
+            const phone = document.getElementById("phone").value;
+            const emailid = document.getElementById("emailid").value;
+            const address = document.getElementById("address").value;
+            const totalfee = document.getElementById("totalfee").value;
+            const paidamount = document.getElementById("paidamount").value;
+            const due = document.getElementById("due").value = totalfee - paidamount;
+            const date = document.getElementById("date").value;
+            const temproomno = sessionStorage.getItem("roomno");
+            const image = document.getElementById("file").files;
+            if (image.length > 0) {
+                var imageToLoad = image[0];
+                var imageReader = new FileReader();
+                imageReader.onload = function (fileLoadedEvent) {
+                    const imagepath = fileLoadedEvent.target.result;
+                    const addUniPromise = performAjax(
+                        "PUT",
+                        `http://localhost:4444/Admin/updateStudent/${id}`,
+                        JSON.stringify({ name, fathername, branch, roomno, temproomno, phone, emailid, address, totalfee, paidamount, due, date, image: imagepath })
+                    );
+                    addUniPromise
+                        .then(isExist => {
+                            const data = JSON.parse(isExist);
+                            if (data.code) {
+                                alert("exists");
+                            }
+                            else {
+                                alert("Successfully Updated");
+
+                            }
+
+                        }
+                        )
+                        .catch(err => {
+                            alert(err.message);
+                        });
+                }
+                imageReader.readAsDataURL(imageToLoad);
+            }
+            else {
+                const getOrgPromise = performAjax(
+                    "PUT",
+                    `http://localhost:4444/Admin/updateStudent/${id}`,
+                    JSON.stringify({ name, fathername, branch, roomno, temproomno, phone, emailid, address, totalfee, paidamount, due, date })
+                );
+                getOrgPromise
+                    .then((OrgPromise) => {
+                        // LoadData();
+                        alert(' Successfully Updated');
+                        cancel();
+                    })
+                    .catch(err => {
+                        alert(err.message);
+                    })
+            }
+        }
+        function payment(event) {
+            event.preventDefault();
+            sessionStorage.setItem("studenthtno", event.target.id);
+            window.location.href = "paymentHistory";
+
+        }
+
+        function cancel() {
+            event.preventDefault();
+            document.getElementById("htno").value = "";
+            document.getElementById("name").value = "";
+            document.getElementById("fathername").value = "";
+            document.getElementById("branch").value = "";
+            document.getElementById("roomno").value = "";
+            document.getElementById("phone").value = "";
+            document.getElementById("emailid").value = "";
+            document.getElementById("address").value = "";
+            document.getElementById("totalfee").value = "";
+            document.getElementById("paidamount").value = "";
+            document.getElementById("date").value = "";
+
+        }
+
+
+        function deleteRecord(event) {
+            const value = event.target.id;
+            var str = value.split(",");
+            const deletePromise = performAjax("DELETE", `http://localhost:4444/Admin/deleteStudent/${str[0].trim()}/${str[1].trim()}`);
+            deletePromise
+                .then((remainingData) => {
+                    LoadData();
+                })
+                .catch(err => {
+                    alert(err.message);
+                })
+        }
+
+    </script>
+</head>
+
+<body onload="LoadData()">
+    <div class="">
+        <div class="students">
+            <h3><a href=" http://localhost:2222/studentdata"
+                    style="text-decoration: none;border-radius:50px;color:mediumvioletred" target="_self" class="">
+                    Add Students</a></h3>
+        </div>
+        <div class="table">
+            <center>
+                <table id="table" border="1" class="tablecss"></table>
+            </center>
+        </div>
+
+        <div class="container">
+            <div class="modal fade" id="myModal" role="dialog" style="margin-top:-25px;">
+                <div class="modal-dialog">
+                    <div class="modal-content" style="background-color: rgb(255, 250, 238)">
+                        <div class="modal-header" style="background-color: lightcoral">
+                            <div class="modal-title">
+                                <button type="button" class="close " data-dismiss="modal">&times</button></div>
+                            <center>
+                                <h2 class="">Students</h2>
+                            </center>
+                        </div>
+                        <div class="modal-body">
+
+                            <div class="row">
+                                <input type="hidden" placeholder="" id="id" name="id" class="form-control">
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-1"></div>
+                                <div class="col-sm-3"><label>H.T No:</label>
+                                    <input type="text" placeholder="H.T No" id="htno" class="form-control">
+                                </div>
+                                <div class="col-sm-4"><label>Name:</label>
+                                    <input type="text" placeholder="Name" id="name" class="form-control">
+                                </div>
+                                <div class="col-sm-3"><label> Father Name:</label>
+                                    <input type="text" placeholder=" Father Name" id="fathername" class="form-control">
+                                </div>
+                                <div class="col-sm-1"></div>
+                            </div><br><br>
+
+                            <div class="row">
+                                <div class="col-sm-1"></div>
+                                <div class="col-sm-3"><label>Branch:</label>
+                                    <select class="form-control" id="branch">
+                                        <option>--select--</option>
+                                        <option>ECE</option>
+                                        <option>CSE</option>
+                                        <option>MECH</option>
+                                        <option>CIVIL</option>
+                                        <option>EEE</option>
+                                    </select>
+                                </div>
+                                <div class="col-sm-4"><label>Room No:</label>
+                                    <select class="form-control" id="roomno">
+                                        <option value="">--select--</option>
+
+                                    </select>
+                                </div>
+                                <div class="col-sm-3"><label>Phone:</label>
+                                    <input type="number" placeholder="Phone No" id="phone" class="form-control">
+                                </div>
+                                <div class="col-sm-1"></div>
+                            </div><br><br>
+
+                            <div class="row">
+                                <div class="col-sm-1"></div>
+                                <div class="col-sm-3"><label>Email id:</label>
+                                    <input type="email" placeholder="Email id" id="emailid" class="form-control">
+                                </div>
+
+                                <div class="col-sm-4"><label>Address:</label>
+                                    <textarea name="message" class="form-control" id="address"
+                                        style="height:38px;"></textarea>
+                                </div>
+                                <div class="col-sm-3"><label>Total Fee:</label>
+                                    <input type="number" placeholder="Total fee" id="totalfee" class="form-control">
+                                </div>
+                                <div class="col-sm-1"></div>
+                            </div><br><br>
+
+                            <div class="row">
+                                <div class="col-sm-1"></div>
+                                <div class="col-sm-4"><label>Advance Amount:</label><br>
+                                    <input type="number" placeholder="Paid amount" id="paidamount" onchange="due(this)"
+                                        class="form-control">
+                                </div>
+                                <div class="col-sm-3"><label>Due:</label>
+                                    <input type="text" id="due" disabled class="form-control">
+                                </div>
+                                <div class="col-sm-3"><label>Date:</label>
+                                    <input type="text" id="date" class="form-control">
+                                </div>
+                                <div class="col-sm-1"></div>
+                            </div><br>
+                            <div class="row">
+                                <div class="col-sm-3"></div>
+                                <div class="col-sm-3" id="imagediv"><img src="" id="image"
+                                        style="width:100px;height:100px;border-radius:50px">
+                                </div>
+                                <div class="col-sm-3"><label>Image:</label>
+                                    <input type="file" id="file" class=""></div>
+
+                                <div class="col-sm-3"></div>
+                            </div><br>
+                            <div class="modal-footer">
+                                <div class="row">
+                                    <div class="col-sm-4"></div>
+                                    <div class="col-sm-3">
+                                        <button type="button" id="add" class="btn btn-primary" data-dismiss="modal"
+                                            onclick="addStudents(event)">Add</button>
+                                        <button type="button" id="btnupdate" class="btn btn-primary"
+                                            data-dismiss="modal" onclick="updateStudents(event)">Update</button>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        <button type="button" id="btnupdate" class="btn btn-danger"
+                                        data-dismiss="modal" onclick="cancel()">Cancel</button>
+                                    </div>
+                                    <div class="col-sm-3"></div>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
